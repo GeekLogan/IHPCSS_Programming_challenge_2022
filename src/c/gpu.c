@@ -210,11 +210,7 @@ int main(int argc, char* argv[])
 			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
 			{
 				my_temperature_change = fmax(fabs(temperatures[i][j] - temperatures_last[i][j]), my_temperature_change);
-
-				//////////////////////////////////////////////////
-				// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
-				//////////////////////////////////////////////////
-				// Moved here for maybe cache use
+				// Moved here from subtask 5 for cache optimization
 				temperatures_last[i][j] = temperatures[i][j];
 			}
 		}
@@ -227,14 +223,7 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		/*#pragma acc kernels
-		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
-		{
-			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
-			{
-				temperatures_last[i][j] = temperatures[i][j];
-			}
-		}*/
+		// Moved to subtask 3 section above
 
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
