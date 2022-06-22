@@ -139,15 +139,14 @@ int main(int argc, char* argv[])
 	double my_temperature_change; /// Maximum temperature change for us
 	double snapshot[ROWS][COLUMNS]; /// The last snapshot made
 
-	#pragma acc data copyin(temperatures_last), copyin(temperatures)
+	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
 	{
 		// ////////////////////////////////////////
 		// -- SUBTASK 1: EXCHANGE GHOST CELLS -- //
 		// ////////////////////////////////////////
 
-		#pragma acc update host(temperatures[1:1][0:COLUMNS_PER_MPI_PROCESS])
-		#pragma acc update host(temperatures[ROWS_PER_MPI_PROCESS:1][0:COLUMNS_PER_MPI_PROCESS])
+		#pragma acc update host(temperatures[1:1][0:COLUMNS_PER_MPI_PROCESS], temperatures[ROWS_PER_MPI_PROCESS:1][0:COLUMNS_PER_MPI_PROCESS])
 
 		// Send data to up neighbour for its ghost cells. If my up_neighbour_rank is MPI_PROC_NULL, this MPI_Ssend will do nothing.
 		MPI_Ssend(&temperatures[1][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, 0, MPI_COMM_WORLD);
@@ -161,8 +160,7 @@ int main(int argc, char* argv[])
 		// Receive data from up neighbour to fill our ghost cells. If my up_neighbour_rank is MPI_PROC_NULL, this MPI_Recv will do nothing.
 		MPI_Recv(&temperatures_last[0][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-		#pragma acc update device(temperatures_last[ROWS_PER_MPI_PROCESS+1:1][0:COLUMNS_PER_MPI_PROCESS])
-		#pragma acc update device(temperatures_last[0:1][0:COLUMNS_PER_MPI_PROCESS]) 
+		#pragma acc update device(temperatures_last[ROWS_PER_MPI_PROCESS+1:1][0:COLUMNS_PER_MPI_PROCESS], temperatures_last[0:1][0:COLUMNS_PER_MPI_PROCESS])
 
 		/////////////////////////////////////////////
 		// -- SUBTASK 2: PROPAGATE TEMPERATURES -- //
