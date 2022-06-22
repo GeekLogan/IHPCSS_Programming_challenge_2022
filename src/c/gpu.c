@@ -186,9 +186,9 @@ int main(int argc, char* argv[])
 											temperatures_last[i+1][0] +
 											temperatures_last[i  ][1]) / 3.0;
 				}
-				temp1 = fmax(fabs(temperatures[i][j] - temperatures_last[i][j]), temp1);
+				temp1 = fmax(fabs(temperatures[i][0] - temperatures_last[i][0]), temp1);
 				// Moved here from subtask 5 for cache optimization
-				temperatures_last[i][j] = temperatures[i][j];
+				temperatures_last[i][0] = temperatures[i][0];
 			}
 
 			#pragma acc loop independent tile(8,8)
@@ -219,7 +219,7 @@ int main(int argc, char* argv[])
 					temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] = (temperatures_last[i-1][COLUMNS_PER_MPI_PROCESS - 1] +
 																	temperatures_last[i+1][COLUMNS_PER_MPI_PROCESS - 1] +
 																	temperatures_last[i  ][COLUMNS_PER_MPI_PROCESS - 2]) / 3.0;
-					temp3 = fmax(fabs(temperatures[i][j] - temperatures_last[i][j]), temp3);
+					temp3 = fmax(fabs(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] - temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1]), temp3);
 					// Moved here from subtask 5 for cache optimization
 					temperatures_last[i][j] = temperatures[i][j];
 				}
