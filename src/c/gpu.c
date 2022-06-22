@@ -252,21 +252,17 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		MPI_Wait(&reduce_request, MPI_STATUS_IGNORE);
-
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
 		///////////////////////////////////
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
 		{
-			double snapshot_start = MPI_Wtime();
 			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 			if(my_rank == MASTER_PROCESS_RANK)
 			{
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
 			}
 			MPI_Gather(&temperatures[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, snapshot, ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
-			printf("dt = %.18f\n", MPI_Wtime() - snapshot_start);
 		}
 
 		// Calculate the total time spent processing
