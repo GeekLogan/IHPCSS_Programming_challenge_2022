@@ -221,7 +221,7 @@ int main(int argc, char* argv[])
 																	temperatures_last[i  ][COLUMNS_PER_MPI_PROCESS - 2]) / 3.0;
 					temp3 = fmax(fabs(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] - temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1]), temp3);
 					// Moved here from subtask 5 for cache optimization
-					temperatures_last[i][j] = temperatures[i][j];
+					temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1] = temperatures[i][COLUMNS_PER_MPI_PROCESS - 1];
 				}
 			}
 
