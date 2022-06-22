@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
 				}
 				temp1 = fmax(fabs(temperatures[i][0] - temperatures_last[i][0]), temp1);
 				// Moved here from subtask 5 for cache optimization
-				temperatures_last[i][0] = temperatures[i][0];
+				//temperatures_last[i][0] = temperatures[i][0];
 			}
 
 			#pragma acc loop independent tile(32,32)
@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
 					}
 					temp2 = fmax(fabs(temperatures[i][j] - temperatures_last[i][j]), temp2);
 					// Moved here from subtask 5 for cache optimization
-					temperatures_last[i][j] = temperatures[i][j];
+					//temperatures_last[i][j] = temperatures[i][j];
 				}
 			}
 
@@ -221,7 +221,7 @@ int main(int argc, char* argv[])
 																	temperatures_last[i  ][COLUMNS_PER_MPI_PROCESS - 2]) / 3.0;
 					temp3 = fmax(fabs(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] - temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1]), temp3);
 					// Moved here from subtask 5 for cache optimization
-					temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1] = temperatures[i][COLUMNS_PER_MPI_PROCESS - 1];
+					//temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1] = temperatures[i][COLUMNS_PER_MPI_PROCESS - 1];
 				}
 			}
 
@@ -250,7 +250,14 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		// Moved to subtask 3 section above
+		#pragma acc kernels collapse(2)
+		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
+		{
+			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
+			{
+				temperatures_last[i][j] = temperatures[i][j];
+			}
+		}
 
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
