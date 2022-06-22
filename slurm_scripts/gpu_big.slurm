@@ -9,6 +9,7 @@
 #SBATCH --error=error.txt
 #SBATCH --gres=gpu:v100:8
 #SBATCH --reservation=challengegpu
+#SBATCH --account=tra210016p
 
 # OpenMP placement
 export OMP_NUM_THREADS=1
