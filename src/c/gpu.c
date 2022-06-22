@@ -135,12 +135,9 @@ int main(int argc, char* argv[])
 	// TASK 2: DATA PROCESSING //
 	/////////////////////////////
 	int iteration_count = 0;
-	/// Maximum temperature change observed across all MPI processes
-	double global_temperature_change;
-	/// Maximum temperature change for us
-	double my_temperature_change; 
-	/// The last snapshot made
-	double snapshot[ROWS][COLUMNS];
+	double global_temperature_change; /// Maximum temperature change observed across all MPI processes
+	double my_temperature_change; /// Maximum temperature change for us
+	double snapshot[ROWS][COLUMNS]; /// The last snapshot made
 
 	#pragma acc data copyin(temperatures_last), copyin(temperatures)
 	while(total_time_so_far < MAX_TIME)
@@ -170,9 +167,8 @@ int main(int argc, char* argv[])
 		/////////////////////////////////////////////
 		// -- SUBTASK 2: PROPAGATE TEMPERATURES -- //
 		/////////////////////////////////////////////
-		double temp1 = 0;
-		double temp2 = 0;
-		double temp3 = 0;
+		// Define temp reduction variables
+		double temp1 = 0, temp2 = 0, temp3 = 0;
 
 		#pragma acc kernels
 		{
