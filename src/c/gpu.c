@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 	//  /  o  \                              //
 	// /_______\                             //
 	///////////////////////////////////////////
-	
+
 	////////////////////////////////////////////////////////
 	// -- TASK 1: DISTRIBUTE DATA TO ALL MPI PROCESSES -- //
 	////////////////////////////////////////////////////////
@@ -107,7 +107,6 @@ int main(int argc, char* argv[])
 				temperatures_last[j][k] = all_temperatures[j-1][k];
 			}
 		}
-
 	}
 	else
 	{
@@ -131,7 +130,7 @@ int main(int argc, char* argv[])
 
 	// Wait for everybody to receive their part before we can start processing
 	MPI_Barrier(MPI_COMM_WORLD);
-	
+
 	/////////////////////////////
 	// TASK 2: DATA PROCESSING //
 	/////////////////////////////
@@ -167,7 +166,7 @@ int main(int argc, char* argv[])
 
 		#pragma acc update device(temperatures_last[ROWS_PER_MPI_PROCESS+1:1][0:COLUMNS_PER_MPI_PROCESS])
 		#pragma acc update device(temperatures_last[0:1][0:COLUMNS_PER_MPI_PROCESS]) 
-		
+
 		/////////////////////////////////////////////
 		// -- SUBTASK 2: PROPAGATE TEMPERATURES -- //
 		/////////////////////////////////////////////
@@ -183,9 +182,11 @@ int main(int argc, char* argv[])
 				// Process the cell at the first column, which has no left neighbour
 				if(temperatures[i][0] != MAX_TEMPERATURE)
 				{
-					temperatures[i][0] = (temperatures_last[i-1][0] +
-											temperatures_last[i+1][0] +
-											temperatures_last[i  ][1]) / 3.0;
+					temperatures[i][0] = (
+						temperatures_last[i-1][0] +
+						temperatures_last[i+1][0] +
+						temperatures_last[i  ][1]
+						) / 3.0;
 				}
 				temp1 = fmax(fabs(temperatures[i][0] - temperatures_last[i][0]), temp1);
 			}
@@ -198,10 +199,12 @@ int main(int argc, char* argv[])
 				{
 					if(temperatures[i][j] != MAX_TEMPERATURE)
 					{
-						temperatures[i][j] = 0.25 * (temperatures_last[i-1][j  ] +
-														temperatures_last[i+1][j  ] +
-														temperatures_last[i  ][j-1] +
-														temperatures_last[i  ][j+1]);
+						temperatures[i][j] = 0.25 * (
+							temperatures_last[i-1][j  ] +
+							temperatures_last[i+1][j  ] +
+							temperatures_last[i  ][j-1] +
+							temperatures_last[i  ][j+1]
+							);
 					}
 					temp2 = fmax(fabs(temperatures[i][j] - temperatures_last[i][j]), temp2);
 				}
@@ -213,9 +216,11 @@ int main(int argc, char* argv[])
 				// Process the cell at the last column, which has no right neighbour
 				if(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] != MAX_TEMPERATURE)
 				{
-					temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] = (temperatures_last[i-1][COLUMNS_PER_MPI_PROCESS - 1] +
-																	temperatures_last[i+1][COLUMNS_PER_MPI_PROCESS - 1] +
-																	temperatures_last[i  ][COLUMNS_PER_MPI_PROCESS - 2]) / 3.0;
+					temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] = (
+						temperatures_last[i-1][COLUMNS_PER_MPI_PROCESS - 1] +
+						temperatures_last[i+1][COLUMNS_PER_MPI_PROCESS - 1] +
+						temperatures_last[i  ][COLUMNS_PER_MPI_PROCESS - 2]
+						) / 3.0;
 					temp3 = fmax(fabs(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] - temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1]), temp3);
 				}
 			}
@@ -227,7 +232,7 @@ int main(int argc, char* argv[])
 		///////////////////////////////////////////////////////
 		// only need to reduce the values from the 3 subprocesses
 		my_temperature_change = fmax(fmax(temp1, temp2), temp3);
-	
+
 		//////////////////////////////////////////////////////////
 		// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
 		//////////////////////////////////////////////////////////
