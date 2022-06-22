@@ -114,6 +114,10 @@ int main(int argc, char* argv[])
 		MPI_Recv(&temperatures_last[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 
+	//copyin(temperatures, temperatures_last)
+	#pragma acc data copyin(temperatures_last), create(temperatues)
+	{
+
 	// Copy the temperatures into the current iteration temperature as well
 	for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 	{
@@ -142,7 +146,6 @@ int main(int argc, char* argv[])
 	/// The last snapshot made
 	double snapshot[ROWS][COLUMNS];
 
-	#pragma acc data copyin(temperatures, temperatures_last)
 	while(total_time_so_far < MAX_TIME)
 	{
 		// ////////////////////////////////////////
@@ -293,6 +296,7 @@ int main(int argc, char* argv[])
 
 		// Update the iteration number
 		iteration_count++;
+	}
 	}
 
 	///////////////////////////////////////////////
