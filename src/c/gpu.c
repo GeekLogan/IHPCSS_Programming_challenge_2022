@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			#pragma acc parallel loop independent tile(8,8)
+			#pragma acc loop independent tile(8,8)
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process all cells between the first and last columns excluded, which each has both left and right neighbours
