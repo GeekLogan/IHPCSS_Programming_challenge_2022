@@ -220,7 +220,6 @@ int main(int argc, char* argv[])
 					temp3 = fmax(fabs(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] - temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1]), temp3);
 				}
 			}
-
 		}
 
 		///////////////////////////////////////////////////////
@@ -228,13 +227,6 @@ int main(int argc, char* argv[])
 		///////////////////////////////////////////////////////
 		// only need to reduce the values from the 3 subprocesses
 		my_temperature_change = fmax(fmax(temp1, temp2), temp3);
-
-		//////////////////////////////////////////////////////////
-		// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
-		//////////////////////////////////////////////////////////
-		MPI_Request reduce_request;
-		//MPI_Reduce(&my_temperature_change, &global_temperature_change, 1, MPI_DOUBLE, MPI_MAX, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
-		MPI_Ireduce(&my_temperature_change, &global_temperature_change, 1, MPI_DOUBLE, MPI_MAX, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &reduce_request);
 
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
@@ -253,6 +245,12 @@ int main(int argc, char* argv[])
 		///////////////////////////////////
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
 		{
+			//////////////////////////////////////////////////////////
+			// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
+			//////////////////////////////////////////////////////////
+			// Only reduce when needed
+			MPI_Reduce(&my_temperature_change, &global_temperature_change, 1, MPI_DOUBLE, MPI_MAX, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
+			
 			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 			if(my_rank == MASTER_PROCESS_RANK)
 			{
