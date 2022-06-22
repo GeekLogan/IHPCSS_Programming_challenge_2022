@@ -172,6 +172,7 @@ int main(int argc, char* argv[])
 		/////////////////////////////////////////////
 		#pragma acc kernels
 		{
+			#pragma acc loop independent
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process the cell at the first column, which has no left neighbour
@@ -183,6 +184,7 @@ int main(int argc, char* argv[])
 				}
 			}
 
+			#pragma acc loop independent collapse(2)
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process all cells between the first and last columns excluded, which each has both left and right neighbours
@@ -198,6 +200,7 @@ int main(int argc, char* argv[])
 				}
 			}
 
+			#pragma acc loop independent
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process the cell at the last column, which has no right neighbour
