@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
 				temp1 = fmax(fabs(temperatures[i][0] - temperatures_last[i][0]), temp1);
 			}
 
-			#pragma acc loop independent tile(48,48)
+			#pragma acc loop independent tile(32,32)
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process all cells between the first and last columns excluded, which each has both left and right neighbours
