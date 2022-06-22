@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
 	}
 
 	//copyin(temperatures, temperatures_last)
-	#pragma acc data copyin(temperatures_last), create(temperatues)
+	#pragma acc data copyin(temperatures_last), create(temperatures)
 	{
 
 	// Copy the temperatures into the current iteration temperature as well
