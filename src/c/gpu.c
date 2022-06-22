@@ -171,33 +171,44 @@ int main(int argc, char* argv[])
 		// -- SUBTASK 2: PROPAGATE TEMPERATURES -- //
 		/////////////////////////////////////////////
 		#pragma acc kernels
-		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
-			// Process the cell at the first column, which has no left neighbour
-			if(temperatures[i][0] != MAX_TEMPERATURE)
+			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
-				temperatures[i][0] = (temperatures_last[i-1][0] +
-									  temperatures_last[i+1][0] +
-									  temperatures_last[i  ][1]) / 3.0;
-			}
-			// Process all cells between the first and last columns excluded, which each has both left and right neighbours
-			for(int j = 1; j < COLUMNS_PER_MPI_PROCESS - 1; j++)
-			{
-				if(temperatures[i][j] != MAX_TEMPERATURE)
+				// Process the cell at the first column, which has no left neighbour
+				if(temperatures[i][0] != MAX_TEMPERATURE)
 				{
-					temperatures[i][j] = 0.25 * (temperatures_last[i-1][j  ] +
-												 temperatures_last[i+1][j  ] +
-												 temperatures_last[i  ][j-1] +
-												 temperatures_last[i  ][j+1]);
+					temperatures[i][0] = (temperatures_last[i-1][0] +
+											temperatures_last[i+1][0] +
+											temperatures_last[i  ][1]) / 3.0;
 				}
 			}
-			// Process the cell at the last column, which has no right neighbour
-			if(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] != MAX_TEMPERATURE)
+
+			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
-				temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] = (temperatures_last[i-1][COLUMNS_PER_MPI_PROCESS - 1] +
-															    temperatures_last[i+1][COLUMNS_PER_MPI_PROCESS - 1] +
-															    temperatures_last[i  ][COLUMNS_PER_MPI_PROCESS - 2]) / 3.0;
+				// Process all cells between the first and last columns excluded, which each has both left and right neighbours
+				for(int j = 1; j < COLUMNS_PER_MPI_PROCESS - 1; j++)
+				{
+					if(temperatures[i][j] != MAX_TEMPERATURE)
+					{
+						temperatures[i][j] = 0.25 * (temperatures_last[i-1][j  ] +
+														temperatures_last[i+1][j  ] +
+														temperatures_last[i  ][j-1] +
+														temperatures_last[i  ][j+1]);
+					}
+				}
 			}
+
+			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
+			{
+				// Process the cell at the last column, which has no right neighbour
+				if(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] != MAX_TEMPERATURE)
+				{
+					temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] = (temperatures_last[i-1][COLUMNS_PER_MPI_PROCESS - 1] +
+																	temperatures_last[i+1][COLUMNS_PER_MPI_PROCESS - 1] +
+																	temperatures_last[i  ][COLUMNS_PER_MPI_PROCESS - 2]) / 3.0;
+				}
+			}
+
 		}
 
 		///////////////////////////////////////////////////////
