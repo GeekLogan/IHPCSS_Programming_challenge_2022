@@ -218,45 +218,6 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////////////
 		MPI_Reduce(&my_temperature_change, &global_temperature_change, 1, MPI_DOUBLE, MPI_MAX, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 
-/*
-		if(my_rank != MASTER_PROCESS_RANK)
-		{
-			// Send my temperature delta to the master MPI process
-			MPI_Ssend(&my_temperature_change, 1, MPI_DOUBLE, MASTER_PROCESS_RANK, 0, MPI_COMM_WORLD);
-			
-			// Receive the total delta calculated by the MPI process based on all MPI processes delta
-			MPI_Recv(&global_temperature_change, 1, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		}
-		else
-		{
-			// Initialise the temperature change to mine
-			global_temperature_change = my_temperature_change;
-
-			// Pick highest temperature change observed
-			for(int j = 0; j < comm_size; j++)
-			{
-				if(j != my_rank)
-				{
-					double subtotal;
-					MPI_Recv(&subtotal, 1, MPI_DOUBLE, j, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-					if(subtotal > global_temperature_change)
-					{
-						global_temperature_change = subtotal;
-					}
-				}
-			}
-
-			// Send delta back to all MPI processes
-			for(int j = 0; j < comm_size; j++)
-			{
-				if(j != my_rank)
-				{
-					MPI_Ssend(&global_temperature_change, 1, MPI_DOUBLE, j, 0, MPI_COMM_WORLD);
-				}
-			}
-		}
-		*/
-
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
