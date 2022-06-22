@@ -260,32 +260,9 @@ int main(int argc, char* argv[])
 			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 			if(my_rank == MASTER_PROCESS_RANK)
 			{
-				for(int j = 0; j < comm_size; j++)
-				{
-					if(j == my_rank)
-					{
-						// Copy locally my own temperature array in the global one
-						for(int k = 0; k < ROWS_PER_MPI_PROCESS; k++)
-						{
-							for(int l = 0; l < COLUMNS_PER_MPI_PROCESS; l++)
-							{
-								snapshot[j * ROWS_PER_MPI_PROCESS + k][l] = temperatures[k + 1][l];
-							}
-						}
-					}
-					else
-					{
-						MPI_Recv(&snapshot[j * ROWS_PER_MPI_PROCESS][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, j, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-					}
-				}
-
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
 			}
-			else
-			{
-				// Send my array to the master MPI process
-				MPI_Ssend(&temperatures[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, 0, MPI_COMM_WORLD); 
-			}
+			MPI_Gather(&temperatures[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, snapshot, ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 		}
 
 		// Calculate the total time spent processing
