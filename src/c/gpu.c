@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 
 	// Rank of my up neighbour if any
 	int up_neighbour_rank = (my_rank == FIRST_PROCESS_RANK) ? MPI_PROC_NULL : my_rank - 1;
-	
+
 	// Rank of my down neighbour if any
 	int down_neighbour_rank = (my_rank == LAST_PROCESS_RANK) ? MPI_PROC_NULL : my_rank + 1;
 
@@ -92,21 +92,22 @@ int main(int argc, char* argv[])
 			// Is the i'th chunk meant for me, the master MPI process?
 			if(i != my_rank)
 			{
+				MPI_Request request;
 				// No, so send the corresponding chunk to that MPI process.
-				MPI_Ssend(&all_temperatures[i * ROWS_PER_MPI_PROCESS][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
-			}
-			else
-			{
-				// Yes, let's copy it straight for the array in which we read the file into.
-				for(int j = 1; j <= ROWS_PER_MPI_PROCESS; j++)
-				{
-					for(int k = 0; k < COLUMNS_PER_MPI_PROCESS; k++)
-					{
-						temperatures_last[j][k] = all_temperatures[j-1][k];
-					}
-				}
+				MPI_Isend(&all_temperatures[i * ROWS_PER_MPI_PROCESS][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, &request);
+				MPI_Request_free(&request);
 			}
 		}
+
+		// Yes, let's copy it straight for the array in which we read the file into.
+		for(int j = 1; j <= ROWS_PER_MPI_PROCESS; j++)
+		{
+			for(int k = 0; k < COLUMNS_PER_MPI_PROCESS; k++)
+			{
+				temperatures_last[j][k] = all_temperatures[j-1][k];
+			}
+		}
+
 	}
 	else
 	{
