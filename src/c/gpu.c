@@ -246,7 +246,7 @@ int main(int argc, char* argv[])
              device time(us): total=737,846 max=605 min=599 avg=601
             elapsed time(us): total=760,984 max=637 min=618 avg=620
 			*/
-		#pragma acc kernels loop independent collapse(2) vector(256)
+		#pragma acc kernels loop independent collapse(2) vector(64)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
