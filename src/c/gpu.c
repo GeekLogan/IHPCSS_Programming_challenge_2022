@@ -262,8 +262,8 @@ int main(int argc, char* argv[])
 
 		if(DEBUG_TIMING_OUTPUT) {
 			total_time_so_far_2 = MPI_Wtime() - start_time_2;
-			if(my_rank == MASTER_PROCESS_RANK)
-				printf("Subtask 3 took %.18f.\n", total_time_so_far_2);
+			//if(my_rank == MASTER_PROCESS_RANK)
+			//	printf("Subtask 3 took %.18f.\n", total_time_so_far_2);
 		}
 
 		//////////////////////////////////////////////////////////
