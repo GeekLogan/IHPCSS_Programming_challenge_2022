@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
 
 		#pragma acc kernels
 		{
-			#pragma acc loop independent
+			#pragma acc loop independent collapse(2)
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process the cell at the first column, which has no left neighbour
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			#pragma acc loop independent
+			#pragma acc loop independent collapse(2)
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process the cell at the last column, which has no right neighbour
@@ -239,7 +239,14 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		#pragma acc kernels loop independent collapse(2) 
+		/*
+		237: compute region reached 1226 times
+        245: kernel launched 1226 times
+            grid: [65535]  block: [128]
+             device time(us): total=737,846 max=605 min=599 avg=601
+            elapsed time(us): total=760,984 max=637 min=618 avg=620
+			*/
+		#pragma acc kernels loop independent collapse(2) vector(256)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
