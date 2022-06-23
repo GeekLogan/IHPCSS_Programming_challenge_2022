@@ -63,12 +63,12 @@ int main(int argc, char* argv[])
 	/// Temperatures from the previous iteration, same dimensions as the array above.
 	double temperatures_last[ROWS][COLUMNS];
 	/// On master process only: contains all temperatures read from input file.
-//	double all_temperatures[ROWS][COLUMNS];
+	double all_temperatures[ROWS][COLUMNS];
 
 	// The master MPI process will read a chunk from the file, send it to the corresponding MPI process and repeat until all chunks are read.
 	if(my_rank == MASTER_PROCESS_RANK)
 	{
-		initialise_temperatures(temperatures);
+		initialise_temperatures(temperatures_last);
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -87,21 +87,13 @@ int main(int argc, char* argv[])
 	double total_time_so_far = 0.0;
 	double start_time = MPI_Wtime();
 
-	for(int j = 0; j < ROWS; j++)
-	{
-		for(int k = 0; k < COLUMNS; k++)
-		{
-			temperatures_last[j][k] = temperatures[j][k];
-		}
-	}
-
 	if(my_rank == MASTER_PROCESS_RANK)
 	{
 		printf("Data acquisition complete.\n");
 	}
 
 	// Wait for everybody to receive their part before we can start processing
-	MPI_Barrier(MPI_COMM_WORLD);
+	//MPI_Barrier(MPI_COMM_WORLD);
 
 	/////////////////////////////
 	// TASK 2: DATA PROCESSING //
@@ -111,10 +103,10 @@ int main(int argc, char* argv[])
 	double my_temperature_change; /// Maximum temperature change for us
 	double snapshot[ROWS][COLUMNS]; /// The last snapshot made
 
-	acc_set_device_num( my_rank, acc_device_nvidia );
+	//acc_set_device_num( my_rank, acc_device_nvidia );
 	if(my_rank != MASTER_PROCESS_RANK) return 0;
 
-	#pragma acc data copyin(temperatures_last, temperatures)
+	#pragma acc data copyin(temperatures_last, temperatures), create(snapshot)
 	while(total_time_so_far < MAX_TIME)
 	{
 		// ////////////////////////////////////////
@@ -200,23 +192,35 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		#pragma acc kernels loop independent collapse(2)
-		for(int i = 0; i < ROWS; i++)
-		{
-			for(int j = 0; j < COLUMNS; j++)
+		if(iteration_count % SNAPSHOT_INTERVAL == 0) {
+			#pragma acc kernels loop independent collapse(2)
+			for(int i = 0; i < ROWS; i++)
 			{
-				temperatures_last[i][j] = temperatures[i][j];
+				for(int j = 0; j < COLUMNS; j++)
+				{
+					temperatures_last[i][j] = temperatures[i][j];
+					snapshot[i][j] = temperatures[i][j];
+				}
+			}
+		} else {
+			#pragma acc kernels loop independent collapse(2)
+			for(int i = 0; i < ROWS; i++)
+			{
+				for(int j = 0; j < COLUMNS; j++)
+				{
+					temperatures_last[i][j] = temperatures[i][j];
+				}
 			}
 		}
+		
 
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
 		///////////////////////////////////
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
-		{
-				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
-				#pragma acc update host(temperatures[0:ROWS][0:COLUMNS])
-				memcpy(&snapshot[0][0], &temperatures[0][0], ROWS * COLUMNS);
+		{			
+			printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
+			#pragma acc update host(snapshot[:][:]) async(1)
 		}
 		
 		// Calculate the total time spent processing
@@ -224,9 +228,6 @@ int main(int argc, char* argv[])
 		{
 			total_time_so_far = MPI_Wtime() - start_time;
 		}
-
-		// Send total timer to everybody so they too can exit the loop if more than the allowed runtime has elapsed already
-		//MPI_Bcast(&total_time_so_far, 1, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 
 		// Update the iteration number
 		iteration_count++;
