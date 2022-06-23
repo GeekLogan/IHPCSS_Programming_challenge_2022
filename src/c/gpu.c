@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		#pragma acc kernels
+		#pragma acc kernels loop independent collapse(2) 
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
