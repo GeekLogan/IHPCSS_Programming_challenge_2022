@@ -113,6 +113,8 @@ int main(int argc, char* argv[])
 
 	acc_set_device_num( my_rank, acc_device_nvidia );
 
+if(my_rank==MASTER_PROCESS_RANK){
+
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
 	{
@@ -216,14 +218,12 @@ int main(int argc, char* argv[])
 		// -- SUBTASK 6: GET SNAPSHOT -- //
 		///////////////////////////////////
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
-		{		
-			if(my_rank == MASTER_PROCESS_RANK)
-			{
+		{
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
 				#pragma acc update host(temperatures[0:ROWS][0:COLUMNS])
 				memcpy(&snapshot[0][0], &temperatures[0][0], ROWS * COLUMNS);
-			}
 		}
+	}
 
 		// Calculate the total time spent processing
 		if(my_rank == MASTER_PROCESS_RANK)
