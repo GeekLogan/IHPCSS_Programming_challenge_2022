@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
 
 	acc_set_device_num( my_rank, acc_device_nvidia );
 	if(my_rank != MASTER_PROCESS_RANK) return 0;
-s
+
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
 	{
