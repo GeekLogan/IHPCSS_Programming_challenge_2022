@@ -11,7 +11,6 @@
 #include <mpi.h>
 #include <omp.h>
 #include <inttypes.h>
-//#include <math.h>
 #include <accelmath.h>
 #include <sched.h>
 #include <unistd.h>
@@ -174,7 +173,7 @@ int main(int argc, char* argv[])
 
 		#pragma acc kernels
 		{
-			#pragma acc loop independent
+			#pragma acc loop independent async(1)
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process the cell at the first column, which has no left neighbour
@@ -189,7 +188,7 @@ int main(int argc, char* argv[])
 				temp1 = fmax(fabs(temperatures[i][0] - temperatures_last[i][0]), temp1);
 			}
 
-			#pragma acc loop independent tile(32,32)
+			#pragma acc loop independent tile(32,32) async(2)
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process all cells between the first and last columns excluded, which each has both left and right neighbours
@@ -208,7 +207,7 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			#pragma acc loop independent
+			#pragma acc loop independent async(3)
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process the cell at the last column, which has no right neighbour
@@ -239,7 +238,7 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		#pragma acc kernels
+		#pragma acc kernels wait(1,2,3)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
