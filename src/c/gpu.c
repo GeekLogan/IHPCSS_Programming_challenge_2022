@@ -246,7 +246,7 @@ int main(int argc, char* argv[])
              device time(us): total=737,846 max=605 min=599 avg=601
             elapsed time(us): total=760,984 max=637 min=618 avg=620
 			*/
-		#pragma acc kernels loop independent collapse(2) vector(64)
+		#pragma acc kernels loop independent collapse(2) async(1)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
@@ -276,6 +276,8 @@ int main(int argc, char* argv[])
 
 		// Send total timer to everybody so they too can exit the loop if more than the allowed runtime has elapsed already
 		MPI_Bcast(&total_time_so_far, 1, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
+
+		#pragma acc wait(1)
 
 		// Update the iteration number
 		iteration_count++;
