@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
 			{
 				MPI_Request request;
 				// No, so send the corresponding chunk to that MPI process.
-				MPI_Isend(&all_temperatures[i * ROWS_PER_MPI_PROCESS][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, &request);
+				MPI_Isend(&all_temperatures[i * ROWS_PER_MPI_PROCESS][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, i, 4, MPI_COMM_WORLD, &request);
 				MPI_Request_free(&request);
 			}
 		}
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
 	else
 	{
 		// Receive my chunk.
-		MPI_Recv(&temperatures_last[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&temperatures_last[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 
 	// Copy the temperatures into the current iteration temperature as well
@@ -166,16 +166,16 @@ int main(int argc, char* argv[])
 		#pragma acc update host(temperatures[1:1][0:COLUMNS_PER_MPI_PROCESS], temperatures[ROWS_PER_MPI_PROCESS:1][0:COLUMNS_PER_MPI_PROCESS])
 
 		// Send data to up neighbour for its ghost cells. If my up_neighbour_rank is MPI_PROC_NULL, this MPI_Ssend will do nothing.
-		MPI_Ssend(&temperatures[1][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, 0, MPI_COMM_WORLD);
+		MPI_Ssend(&temperatures[1][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, 3, MPI_COMM_WORLD);
 
 		// Receive data from down neighbour to fill our ghost cells. If my down_neighbour_rank is MPI_PROC_NULL, this MPI_Recv will do nothing.
-		MPI_Recv(&temperatures_last[ROWS_PER_MPI_PROCESS+1][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, down_neighbour_rank, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&temperatures_last[ROWS_PER_MPI_PROCESS+1][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, down_neighbour_rank, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 		// Send data to down neighbour for its ghost cells. If my down_neighbour_rank is MPI_PROC_NULL, this MPI_Ssend will do nothing.
-		MPI_Ssend(&temperatures[ROWS_PER_MPI_PROCESS][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, down_neighbour_rank, 0, MPI_COMM_WORLD);
+		MPI_Ssend(&temperatures[ROWS_PER_MPI_PROCESS][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, down_neighbour_rank, 3, MPI_COMM_WORLD);
 
 		// Receive data from up neighbour to fill our ghost cells. If my up_neighbour_rank is MPI_PROC_NULL, this MPI_Recv will do nothing.
-		MPI_Recv(&temperatures_last[0][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&temperatures_last[0][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 		#pragma acc update device(temperatures_last[ROWS_PER_MPI_PROCESS+1:1][0:COLUMNS_PER_MPI_PROCESS], temperatures_last[0:1][0:COLUMNS_PER_MPI_PROCESS])
 
@@ -324,12 +324,12 @@ int main(int argc, char* argv[])
 				for(int i = 0; i < comm_size; i++)
 				{
 					MPI_Request request;
-					MPI_Irecv(&snapshot[i * ROWS_PER_MPI_PROCESS][0], buffer_size, MPI_DOUBLE, i, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
+					MPI_Irecv(&snapshot[i * ROWS_PER_MPI_PROCESS][0], buffer_size, MPI_DOUBLE, i, 5, MPI_COMM_WORLD, &request);
 					MPI_Request_free(&request);
 				}
 			} else {
 				MPI_Request request;
-				MPI_Isend(&snapshot[0][0], buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, 0, MPI_COMM_WORLD, &request);
+				MPI_Isend(&snapshot[0][0], buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, 5, MPI_COMM_WORLD, &request);
 				MPI_Request_free(&request);
 			}
 		}
