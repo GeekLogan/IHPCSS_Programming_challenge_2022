@@ -19,7 +19,7 @@
 
 #include "util.h"
 
-#define DEBUG_TIMING_OUTPUT 1
+#define DEBUG_TIMING_OUTPUT 0
 
 /**
  * @argv[0] Name of the program
@@ -341,9 +341,6 @@ int main(int argc, char* argv[])
 		// Update the iteration number
 		iteration_count++;
 	}
-
-//	if(snapshot_request != MPI_REQUEST_NULL)
-//		MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
 
 	///////////////////////////////////////////////
 	//     ^                                     //

@@ -16,7 +16,7 @@ export OMP_NUM_THREADS=1
 export OMP_PROC_BIND=true
 export OMP_PLACES=sockets
 
-export PGI_ACC_TIME=1
+#export PGI_ACC_TIME=1
 
 # Run the binary
 module load nvhpc/21.2
