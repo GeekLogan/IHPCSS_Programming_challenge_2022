@@ -19,8 +19,6 @@
 
 #include "util.h"
 
-#define DEBUG_TIMING_OUTPUT 0
-
 /**
  * @argv[0] Name of the program
  * @argv[1] path to the dataset to load
@@ -47,7 +45,6 @@ int main(int argc, char* argv[])
 	const int FIRST_PROCESS_RANK = 0;
 	/// Rank of the last MPI process
 	const int LAST_PROCESS_RANK = comm_size - 1;
-	const size_t buffer_size = ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS;
 
 	// Rank of my up neighbour if any
 	int up_neighbour_rank = (my_rank == FIRST_PROCESS_RANK) ? MPI_PROC_NULL : my_rank - 1;
@@ -88,21 +85,18 @@ int main(int argc, char* argv[])
 	// -- TASK 1: DISTRIBUTE DATA TO ALL MPI PROCESSES -- //
 	////////////////////////////////////////////////////////
 	double total_time_so_far = 0.0;
-	double total_time_so_far_2 = 0.0;
 	double start_time = MPI_Wtime();
-	double start_time_2 = MPI_Wtime();
 
 	if(my_rank == MASTER_PROCESS_RANK)
 	{
 		for(int i = 0; i < comm_size; i++)
 		{
-			printf("Sending %d\n", i);
 			// Is the i'th chunk meant for me, the master MPI process?
 			if(i != my_rank)
 			{
 				MPI_Request request;
 				// No, so send the corresponding chunk to that MPI process.
-				MPI_Isend(&all_temperatures[i * ROWS_PER_MPI_PROCESS][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, i, 4, MPI_COMM_WORLD, &request);
+				MPI_Isend(&all_temperatures[i * ROWS_PER_MPI_PROCESS][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, &request);
 				MPI_Request_free(&request);
 			}
 		}
@@ -119,7 +113,7 @@ int main(int argc, char* argv[])
 	else
 	{
 		// Receive my chunk.
-		MPI_Recv(&temperatures_last[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&temperatures_last[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 
 	// Copy the temperatures into the current iteration temperature as well
@@ -146,52 +140,37 @@ int main(int argc, char* argv[])
 	double global_temperature_change; /// Maximum temperature change observed across all MPI processes
 	double my_temperature_change; /// Maximum temperature change for us
 	double snapshot[ROWS][COLUMNS]; /// The last snapshot made
-	//double snapshot_buffer[ROWS_PER_MPI_PROCESS][COLUMNS_PER_MPI_PROCESS];
 
 	acc_set_device_num( my_rank, acc_device_nvidia );
 
-	total_time_so_far_2 = MPI_Wtime() - start_time_2;
-	if(my_rank == MASTER_PROCESS_RANK)
-		printf("Init took %.2f.\n", total_time_so_far_2);
-
-	#pragma acc data copyin(temperatures_last, temperatures), create(snapshot)
+	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
 	{
 		// ////////////////////////////////////////
 		// -- SUBTASK 1: EXCHANGE GHOST CELLS -- //
 		// ////////////////////////////////////////
-		if(DEBUG_TIMING_OUTPUT)
-			start_time_2 = MPI_Wtime();
 
 		#pragma acc update host(temperatures[1:1][0:COLUMNS_PER_MPI_PROCESS], temperatures[ROWS_PER_MPI_PROCESS:1][0:COLUMNS_PER_MPI_PROCESS])
 
 		// Send data to up neighbour for its ghost cells. If my up_neighbour_rank is MPI_PROC_NULL, this MPI_Ssend will do nothing.
-		MPI_Ssend(&temperatures[1][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, 3, MPI_COMM_WORLD);
+		MPI_Ssend(&temperatures[1][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, 0, MPI_COMM_WORLD);
 
 		// Receive data from down neighbour to fill our ghost cells. If my down_neighbour_rank is MPI_PROC_NULL, this MPI_Recv will do nothing.
-		MPI_Recv(&temperatures_last[ROWS_PER_MPI_PROCESS+1][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, down_neighbour_rank, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&temperatures_last[ROWS_PER_MPI_PROCESS+1][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, down_neighbour_rank, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 		// Send data to down neighbour for its ghost cells. If my down_neighbour_rank is MPI_PROC_NULL, this MPI_Ssend will do nothing.
-		MPI_Ssend(&temperatures[ROWS_PER_MPI_PROCESS][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, down_neighbour_rank, 3, MPI_COMM_WORLD);
+		MPI_Ssend(&temperatures[ROWS_PER_MPI_PROCESS][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, down_neighbour_rank, 0, MPI_COMM_WORLD);
 
 		// Receive data from up neighbour to fill our ghost cells. If my up_neighbour_rank is MPI_PROC_NULL, this MPI_Recv will do nothing.
-		MPI_Recv(&temperatures_last[0][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&temperatures_last[0][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 		#pragma acc update device(temperatures_last[ROWS_PER_MPI_PROCESS+1:1][0:COLUMNS_PER_MPI_PROCESS], temperatures_last[0:1][0:COLUMNS_PER_MPI_PROCESS])
-
-		if(DEBUG_TIMING_OUTPUT) {
-			total_time_so_far_2 = MPI_Wtime() - start_time_2;
-			if(my_rank == MASTER_PROCESS_RANK)
-				printf("Subtask 1 took %.18f.\n", total_time_so_far_2);
-		}
 
 		/////////////////////////////////////////////
 		// -- SUBTASK 2: PROPAGATE TEMPERATURES -- //
 		/////////////////////////////////////////////
 		// Define temp reduction variables
 		double temp1 = 0, temp2 = 0, temp3 = 0;
-		if(DEBUG_TIMING_OUTPUT)
-			start_time_2 = MPI_Wtime();
 
 		#pragma acc kernels
 		{
@@ -245,88 +224,47 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		if(DEBUG_TIMING_OUTPUT) {
-			total_time_so_far_2 = MPI_Wtime() - start_time_2;
-			if(my_rank == MASTER_PROCESS_RANK)
-				printf("Subtask 2 took %.18f.\n", total_time_so_far_2);
-		}
-
 		///////////////////////////////////////////////////////
 		// -- SUBTASK 3: CALCULATE MAX TEMPERATURE CHANGE -- //
 		///////////////////////////////////////////////////////
 		// only need to reduce the values from the 3 subprocesses
-		if(DEBUG_TIMING_OUTPUT)
-			start_time_2 = MPI_Wtime();
-		
 		my_temperature_change = fmax(fmax(temp1, temp2), temp3);
-
-		if(DEBUG_TIMING_OUTPUT) {
-			total_time_so_far_2 = MPI_Wtime() - start_time_2;
-			//if(my_rank == MASTER_PROCESS_RANK)
-			//	printf("Subtask 3 took %.18f.\n", total_time_so_far_2);
-		}
 
 		//////////////////////////////////////////////////////////
 		// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
 		//////////////////////////////////////////////////////////
-		if(DEBUG_TIMING_OUTPUT)
-			start_time_2 = MPI_Wtime();
-
 		MPI_Reduce(&my_temperature_change, &global_temperature_change, 1, MPI_DOUBLE, MPI_MAX, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
-
-		if(DEBUG_TIMING_OUTPUT) {
-			total_time_so_far_2 = MPI_Wtime() - start_time_2;
-			if(my_rank == MASTER_PROCESS_RANK)
-				printf("Subtask 4 took %.18f.\n", total_time_so_far_2);
-		}
 
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		if(DEBUG_TIMING_OUTPUT)
-			start_time_2 = MPI_Wtime();
-
-		// WAIT FOR snapshot_done
-
-		#pragma acc kernels loop independent collapse(2)
+		/*
+		237: compute region reached 1226 times
+        245: kernel launched 1226 times
+            grid: [65535]  block: [128]
+             device time(us): total=737,846 max=605 min=599 avg=601
+            elapsed time(us): total=760,984 max=637 min=618 avg=620
+			*/
+		#pragma acc kernels loop independent collapse(2) async(1)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
 			{
 				temperatures_last[i][j] = temperatures[i][j];
-				if(iteration_count % SNAPSHOT_INTERVAL)
-					snapshot[i-1][j] = temperatures[i][j];
 			}
-		}
-
-		if(DEBUG_TIMING_OUTPUT) {
-			total_time_so_far_2 = MPI_Wtime() - start_time_2;
-			if(my_rank == MASTER_PROCESS_RANK)
-				printf("Subtask 5 took %.18f.\n", total_time_so_far_2);
 		}
 
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
 		///////////////////////////////////
-		if(DEBUG_TIMING_OUTPUT)
-			start_time_2 = MPI_Wtime();
-
-		if(iteration_count % SNAPSHOT_INTERVAL == 0) {
+		if(iteration_count % SNAPSHOT_INTERVAL == 0)
+		{		
+			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 			if(my_rank == MASTER_PROCESS_RANK)
 			{
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
 			}
-
-			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
-			//#pragma acc update host(snapshot[0:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
-
-			MPI_Gather(&temperatures[1][0], buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
-		}
-
-		if(DEBUG_TIMING_OUTPUT) {
-			total_time_so_far_2 = MPI_Wtime() - start_time_2;
-			if(my_rank == MASTER_PROCESS_RANK)
-				printf("Subtask 6 took %.18f.\n", total_time_so_far_2);
+			MPI_Gather(&temperatures[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, snapshot, ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 		}
 
 		// Calculate the total time spent processing
@@ -337,6 +275,8 @@ int main(int argc, char* argv[])
 
 		// Send total timer to everybody so they too can exit the loop if more than the allowed runtime has elapsed already
 		MPI_Bcast(&total_time_so_far, 1, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
+
+		#pragma acc wait(1)
 
 		// Update the iteration number
 		iteration_count++;
