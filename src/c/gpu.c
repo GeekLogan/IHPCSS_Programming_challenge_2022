@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
 	const int FIRST_PROCESS_RANK = 0;
 	/// Rank of the last MPI process
 	const int LAST_PROCESS_RANK = comm_size - 1;
+	const size_t buffer_size = ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS;
 
 	// Rank of my up neighbour if any
 	int up_neighbour_rank = (my_rank == FIRST_PROCESS_RANK) ? MPI_PROC_NULL : my_rank - 1;
@@ -145,19 +146,15 @@ int main(int argc, char* argv[])
 	double global_temperature_change; /// Maximum temperature change observed across all MPI processes
 	double my_temperature_change; /// Maximum temperature change for us
 	double snapshot[ROWS][COLUMNS]; /// The last snapshot made
+	//double snapshot_buffer[ROWS_PER_MPI_PROCESS][COLUMNS_PER_MPI_PROCESS];
 
 	acc_set_device_num( my_rank, acc_device_nvidia );
-
-	MPI_Request snapshot_requests[comm_size];
-
-	const size_t buffer_size = ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS;
-	void * snapshot_buffer = malloc(buffer_size * sizeof(double));
 
 	total_time_so_far_2 = MPI_Wtime() - start_time_2;
 	if(my_rank == MASTER_PROCESS_RANK)
 		printf("Init took %.2f.\n", total_time_so_far_2);
 
-	#pragma acc data copyin(temperatures_last, temperatures)
+	#pragma acc data copyin(temperatures_last, temperatures), create(snapshot)
 	while(total_time_so_far < MAX_TIME)
 	{
 		// ////////////////////////////////////////
@@ -289,12 +286,16 @@ int main(int argc, char* argv[])
 		if(DEBUG_TIMING_OUTPUT)
 			start_time_2 = MPI_Wtime();
 
-		#pragma acc kernels loop independent collapse(2) async(1)
+		// WAIT FOR snapshot_done
+
+		#pragma acc kernels loop independent collapse(2)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
 			{
 				temperatures_last[i][j] = temperatures[i][j];
+				if(iteration_count % SNAPSHOT_INTERVAL)
+					snapshot[i-1][j] = temperatures[i][j];
 			}
 		}
 
@@ -310,71 +311,26 @@ int main(int argc, char* argv[])
 		if(DEBUG_TIMING_OUTPUT)
 			start_time_2 = MPI_Wtime();
 
-		/*
-		if(iteration_count % SNAPSHOT_INTERVAL == 0)
-		{
-			if(my_rank == MASTER_PROCESS_RANK)
-			{
-				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
-			}
-			if(snapshot_request != MPI_REQUEST_NULL) MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
-			//#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
-			//memcpy(snapshot_buffer, temperatures, buffer_size * sizeof(double));
-			//MPI_Igather(&temperatures[1][0], buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
-			MPI_Gather(&temperatures[1][0], buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
-		}
-		*/
-
-		/*if(my_rank == MASTER_PROCESS_RANK)
-			{
-				for(int j = 0; j < comm_size; j++)
-				{
-					if(j == my_rank)
-					{
-						// Copy locally my own temperature array in the global one
-						for(int k = 0; k < ROWS_PER_MPI_PROCESS; k++)
-						{
-							for(int l = 0; l < COLUMNS_PER_MPI_PROCESS; l++)
-							{
-								snapshot[j * ROWS_PER_MPI_PROCESS + k][l] = temperatures[k + 1][l];
-							}
-						}
-					}
-					else
-					{
-						MPI_Recv(&snapshot[j * ROWS_PER_MPI_PROCESS][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, j, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-					}
-				}
-
-				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
-			}
-			else
-			{
-				// Send my array to the master MPI process
-				MPI_Ssend(&temperatures[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, 0, MPI_COMM_WORLD); 
-			}
-			*/
-
 		if(iteration_count % SNAPSHOT_INTERVAL == 0) {
 			if(my_rank == MASTER_PROCESS_RANK)
 			{
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
 			}
 
-//			for(int i = 0; i < comm_size; i++) {
-//				if(snapshot_requests[i] != MPI_REQUEST_NULL)
-//				{
-//					MPI_Wait(&snapshot_requests[i], MPI_STATUS_IGNORE);
-//				}
-//			}
-
-			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
+			//#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
+			#pragma acc update host(snapshot[0:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 
 			if(my_rank == MASTER_PROCESS_RANK) {
-				memcpy(snapshot, &temperatures[1][0], buffer_size * sizeof(double));
-				MPI_Irecv(
+				for(int i = 0; i < comm_size; i++)
+				{
+					MPI_Request request;
+					MPI_Irecv(&snapshot[j * ROWS_PER_MPI_PROCESS][0], buffer_size, MPI_DOUBLE, j, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE, &request);
+					MPI_Request_free(&request);
+				}
 			} else {
-				memcpy(snapshot_buffer, &temperatures[1][0], buffer_size * sizeof(double));
+				MPI_Request request;
+				MPI_Isend(&snapshot[0][0], buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, 0, MPI_COMM_WORLD, &request);
+				MPI_Request_free(&request);
 			}
 		}
 
@@ -392,8 +348,6 @@ int main(int argc, char* argv[])
 
 		// Send total timer to everybody so they too can exit the loop if more than the allowed runtime has elapsed already
 		MPI_Bcast(&total_time_so_far, 1, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
-
-		#pragma acc wait(1)
 
 		// Update the iteration number
 		iteration_count++;
