@@ -324,7 +324,7 @@ int main(int argc, char* argv[])
 				for(int i = 0; i < comm_size; i++)
 				{
 					MPI_Request request;
-					MPI_Irecv(&snapshot[j * ROWS_PER_MPI_PROCESS][0], buffer_size, MPI_DOUBLE, j, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE, &request);
+					MPI_Irecv(&snapshot[i * ROWS_PER_MPI_PROCESS][0], buffer_size, MPI_DOUBLE, i, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
 					MPI_Request_free(&request);
 				}
 			} else {
