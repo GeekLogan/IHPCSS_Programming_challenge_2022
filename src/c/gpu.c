@@ -144,6 +144,8 @@ int main(int argc, char* argv[])
 	acc_set_device_num( my_rank, acc_device_nvidia );
 
 	MPI_Request snapshot_request = MPI_REQUEST_NULL;
+	const size_t buffer_size = ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS;
+	void * snapshot_buffer = malloc(buffer_size);
 
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
@@ -272,14 +274,14 @@ int main(int argc, char* argv[])
 				*/
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
 		{	
-			if(snapshot_request != MPI_REQUEST_NULL)
-				MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
-			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 			if(my_rank == MASTER_PROCESS_RANK)
 			{
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
 			}
-			MPI_Igather(&temperatures[1][0], ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, snapshot, ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
+			if(snapshot_request != MPI_REQUEST_NULL) MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
+			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
+			memcpy(snapshot_buffer, temperatures, buffer_size);
+			MPI_Igather(snapshot_buffer, buffer_size, MPI_DOUBLE, snapshot, ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
 		}
 
 		// Calculate the total time spent processing
