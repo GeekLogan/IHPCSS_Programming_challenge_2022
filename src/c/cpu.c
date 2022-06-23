@@ -162,7 +162,6 @@ int main(int argc, char* argv[])
 		// -- SUBTASK 2: PROPAGATE TEMPERATURES -- //
 		/////////////////////////////////////////////
 		#pragma omp for
-		#pragma omp tile sizes(32,32)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			// Process the cell at the first column, which has no left neighbour
