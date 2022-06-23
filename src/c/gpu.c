@@ -5,6 +5,7 @@
  * @author Ludovic Capelli
  **/
 
+#include <openacc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
@@ -138,6 +139,8 @@ int main(int argc, char* argv[])
 	double global_temperature_change; /// Maximum temperature change observed across all MPI processes
 	double my_temperature_change; /// Maximum temperature change for us
 	double snapshot[ROWS][COLUMNS]; /// The last snapshot made
+
+	acc_set_device_num( my_rank, acc_device_nvidia );
 
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)

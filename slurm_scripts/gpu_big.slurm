@@ -16,6 +16,9 @@ export OMP_NUM_THREADS=1
 export OMP_PROC_BIND=true
 export OMP_PLACES=sockets
 
+export PGI_ACC_TIME=1
+
 # Run the binary
 module load nvhpc/21.2
+pgaccelinfo
 mpirun -np ${SLURM_NTASKS} --map-by socket -bind-to socket -report-bindings ./bin/${1}/gpu_big > $2
