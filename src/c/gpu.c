@@ -326,6 +326,7 @@ int main(int argc, char* argv[])
 		if(DEBUG_TIMING_OUTPUT)
 			start_time_2 = MPI_Wtime();
 		
+		if(0)
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
 		{	
 			if(my_rank == MASTER_PROCESS_RANK)
