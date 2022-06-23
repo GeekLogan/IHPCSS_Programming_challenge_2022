@@ -299,6 +299,9 @@ int main(int argc, char* argv[])
 		iteration_count++;
 	}
 
+	if(snapshot_request != MPI_REQUEST_NULL)
+		MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
+
 	///////////////////////////////////////////////
 	//     ^                                     //
 	//    / \                                    //
