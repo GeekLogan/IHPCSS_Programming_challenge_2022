@@ -113,7 +113,6 @@ int main(int argc, char* argv[])
 
 	acc_set_device_num( my_rank, acc_device_nvidia );
 	if(my_rank != MASTER_PROCESS_RANK) return 0;
-printf("here-1\n");
 
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
@@ -128,7 +127,6 @@ printf("here-1\n");
 		/////////////////////////////////////////////
 		// Define temp reduction variables
 		double temp1 = 0, temp2 = 0, temp3 = 0;
-printf("here1\n");
 		#pragma acc kernels
 		{
 			/*
@@ -193,7 +191,6 @@ printf("here1\n");
 		///////////////////////////////////////////////////////
 		// only need to reduce the values from the 3 subprocesses
 		my_temperature_change = fmax(fmax(temp1, temp2), temp3);
-		printf("here2\n");
 		//////////////////////////////////////////////////////////
 		// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
 		//////////////////////////////////////////////////////////
@@ -204,14 +201,14 @@ printf("here1\n");
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
 		#pragma acc kernels loop independent collapse(2)
-		for(int i = 0; i <= ROWS; i++)
+		for(int i = 0; i < ROWS; i++)
 		{
 			for(int j = 0; j < COLUMNS; j++)
 			{
 				temperatures_last[i][j] = temperatures[i][j];
 			}
 		}
-printf("here3\n");
+
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
 		///////////////////////////////////
