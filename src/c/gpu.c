@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
 
 	acc_set_device_num( my_rank, acc_device_nvidia );
 
-	MPI_Request snapshot_request;
+	MPI_Request snapshot_request = MPI_REQUEST_NULL;
 
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
