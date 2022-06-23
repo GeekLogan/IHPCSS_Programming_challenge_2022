@@ -326,7 +326,6 @@ int main(int argc, char* argv[])
 		if(DEBUG_TIMING_OUTPUT)
 			start_time_2 = MPI_Wtime();
 		
-		if(0)
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
 		{	
 			if(my_rank == MASTER_PROCESS_RANK)
@@ -334,7 +333,7 @@ int main(int argc, char* argv[])
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
 			}
 			//if(snapshot_request != MPI_REQUEST_NULL) MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
-			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
+			if(0)#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 			//memcpy(snapshot_buffer, temperatures, buffer_size * sizeof(double));
 			//MPI_Igather(snapshot_buffer, buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
 			MPI_Gather(&temperatures[1][0], buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
