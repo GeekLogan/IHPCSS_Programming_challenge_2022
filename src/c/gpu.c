@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		#pragma acc kernels collapse(2)
+		#pragma acc kernels
 		for(int i = 0; i < ROWS; i++)
 		{
 			for(int j = 0; j < COLUMNS; j++)
