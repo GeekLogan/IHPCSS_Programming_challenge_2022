@@ -104,7 +104,10 @@ int main(int argc, char* argv[])
 	double snapshot[ROWS][COLUMNS]; /// The last snapshot made
 
 	//acc_set_device_num( my_rank, acc_device_nvidia );
-	if(my_rank != MASTER_PROCESS_RANK) return 0;
+	if(my_rank != MASTER_PROCESS_RANK) {
+		MPI_Finalize();
+		return 0;
+	}
 
 	#pragma acc data copyin(temperatures_last, temperatures), create(snapshot)
 	while(total_time_so_far < MAX_TIME)
@@ -220,7 +223,7 @@ int main(int argc, char* argv[])
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
 		{			
 			printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
-			#pragma acc update host(snapshot[:][:]) async(1)
+			#pragma acc update host(snapshot[:][:])
 		}
 		
 		// Calculate the total time spent processing
