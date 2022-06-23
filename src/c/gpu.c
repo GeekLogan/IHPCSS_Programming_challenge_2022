@@ -189,7 +189,7 @@ int main(int argc, char* argv[])
 				temp1 = fmax(fabs(temperatures[i][0] - temperatures_last[i][0]), temp1);
 			}
 
-			#pragma acc loop independent tile(64,64)
+			#pragma acc loop independent tile(32,32)
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			{
 				// Process all cells between the first and last columns excluded, which each has both left and right neighbours
@@ -234,6 +234,7 @@ int main(int argc, char* argv[])
 		// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
 		//////////////////////////////////////////////////////////
 		// Only reduce when needed
+		if(iteration_count % SNAPSHOT_INTERVAL == 0)
 		MPI_Reduce(&my_temperature_change, &global_temperature_change, 1, MPI_DOUBLE, MPI_MAX, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 
 		//////////////////////////////////////////////////
