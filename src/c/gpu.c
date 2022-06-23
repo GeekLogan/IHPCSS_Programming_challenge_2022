@@ -317,21 +317,10 @@ int main(int argc, char* argv[])
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
 			}
 
-			//#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
-			#pragma acc update host(snapshot[0:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
+			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
+			//#pragma acc update host(snapshot[0:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 
-			if(my_rank == MASTER_PROCESS_RANK) {
-				for(int i = 0; i < comm_size; i++)
-				{
-					MPI_Request request;
-					MPI_Irecv(&snapshot[i * ROWS_PER_MPI_PROCESS][0], buffer_size, MPI_DOUBLE, i, 5, MPI_COMM_WORLD, &request);
-					MPI_Request_free(&request);
-				}
-			} else {
-				MPI_Request request;
-				MPI_Isend(&snapshot[0][0], buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, 5, MPI_COMM_WORLD, &request);
-				MPI_Request_free(&request);
-			}
+			MPI_Gather(&temperatures[1][0], buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 		}
 
 		if(DEBUG_TIMING_OUTPUT) {
