@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 		/////////////////////////////////////////////
 		// Define temp reduction variables
 		double temp1 = 0, temp2 = 0, temp3 = 0;
-
+printf("here1\n");
 		#pragma acc kernels
 		{
 			/*
@@ -192,7 +192,7 @@ int main(int argc, char* argv[])
 		///////////////////////////////////////////////////////
 		// only need to reduce the values from the 3 subprocesses
 		my_temperature_change = fmax(fmax(temp1, temp2), temp3);
-		
+		printf("here2\n");
 		//////////////////////////////////////////////////////////
 		// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
 		//////////////////////////////////////////////////////////
@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
 				temperatures_last[i][j] = temperatures[i][j];
 			}
 		}
-
+printf("here3\n");
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
 		///////////////////////////////////
@@ -220,7 +220,7 @@ int main(int argc, char* argv[])
 				#pragma acc update host(temperatures[0:ROWS][0:COLUMNS])
 				memcpy(&snapshot[0][0], &temperatures[0][0], ROWS * COLUMNS);
 		}
-
+printf("here4\n");
 		// Calculate the total time spent processing
 		if(my_rank == MASTER_PROCESS_RANK)
 		{
