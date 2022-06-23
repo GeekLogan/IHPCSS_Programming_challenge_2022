@@ -272,7 +272,8 @@ int main(int argc, char* argv[])
 				*/
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
 		{	
-			MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
+			if(snapshot_request != MPI_REQUEST_NULL)
+				MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
 			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 			if(my_rank == MASTER_PROCESS_RANK)
 			{
