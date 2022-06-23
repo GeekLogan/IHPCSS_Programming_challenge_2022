@@ -174,6 +174,7 @@ int main(int argc, char* argv[])
 			}
 			// Process all cells between the first and last columns excluded, which each has both left and right neighbours
 			#pragma omp for collapse(2) nowait
+			#pragma omp tile sizes(32,32)
 			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			for(int j = 1; j < COLUMNS_PER_MPI_PROCESS - 1; j++)
 			{
