@@ -171,7 +171,6 @@ int main(int argc, char* argv[])
 		// Define temp reduction variables
 		double temp1 = 0, temp2 = 0, temp3 = 0;
 
-		
 		#pragma acc kernels async(1)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
@@ -220,19 +219,6 @@ int main(int argc, char* argv[])
 				temp3 = fmax(fabs(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] - temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1]), temp3);
 			}
 		}
-		
-
-		///////////////////////////////////////////////////////
-		// -- SUBTASK 3: CALCULATE MAX TEMPERATURE CHANGE -- //
-		///////////////////////////////////////////////////////
-		// only need to reduce the values from the 3 subprocesses
-		my_temperature_change = fmax(fmax(temp1, temp2), temp3);
-
-		//////////////////////////////////////////////////////////
-		// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
-		//////////////////////////////////////////////////////////
-		// Only reduce when needed
-		MPI_Reduce(&my_temperature_change, &global_temperature_change, 1, MPI_DOUBLE, MPI_MAX, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
@@ -245,6 +231,18 @@ int main(int argc, char* argv[])
 				temperatures_last[i][j] = temperatures[i][j];
 			}
 		}
+
+		///////////////////////////////////////////////////////
+		// -- SUBTASK 3: CALCULATE MAX TEMPERATURE CHANGE -- //
+		///////////////////////////////////////////////////////
+		// only need to reduce the values from the 3 subprocesses
+		my_temperature_change = fmax(fmax(temp1, temp2), temp3);
+
+		//////////////////////////////////////////////////////////
+		// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
+		//////////////////////////////////////////////////////////
+		// Only reduce when needed
+		MPI_Reduce(&my_temperature_change, &global_temperature_change, 1, MPI_DOUBLE, MPI_MAX, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
