@@ -159,6 +159,7 @@ int main(int argc, char* argv[])
 		// ////////////////////////////////////////
 		// -- SUBTASK 1: EXCHANGE GHOST CELLS -- //
 		// ////////////////////////////////////////
+		start_time_2 = MPI_Wtime();
 
 		#pragma acc update host(temperatures[1:1][0:COLUMNS_PER_MPI_PROCESS], temperatures[ROWS_PER_MPI_PROCESS:1][0:COLUMNS_PER_MPI_PROCESS])
 
@@ -175,6 +176,10 @@ int main(int argc, char* argv[])
 		MPI_Recv(&temperatures_last[0][0], COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, up_neighbour_rank, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 		#pragma acc update device(temperatures_last[ROWS_PER_MPI_PROCESS+1:1][0:COLUMNS_PER_MPI_PROCESS], temperatures_last[0:1][0:COLUMNS_PER_MPI_PROCESS])
+
+		total_time_so_far_2 = MPI_Wtime() - start_time_2;
+		if(my_rank == MASTER_PROCESS_RANK)
+			printf("Subtask 1 took %.2f.\n", total_time_so_far_2);
 
 		/////////////////////////////////////////////
 		// -- SUBTASK 2: PROPAGATE TEMPERATURES -- //
