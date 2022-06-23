@@ -95,6 +95,7 @@ int main(int argc, char* argv[])
 	{
 		for(int i = 0; i < comm_size; i++)
 		{
+			printf("Sending %d\n", i);
 			// Is the i'th chunk meant for me, the master MPI process?
 			if(i != my_rank)
 			{
@@ -148,8 +149,6 @@ int main(int argc, char* argv[])
 	acc_set_device_num( my_rank, acc_device_nvidia );
 
 	MPI_Request snapshot_requests[comm_size];
-	for(int i = 0; i < comm_size; i++)
-		snapshot_requests[i] = MPI_REQUEST_NULL;
 
 	const size_t buffer_size = ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS;
 	void * snapshot_buffer = malloc(buffer_size * sizeof(double));
@@ -287,13 +286,6 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		/*
-		237: compute region reached 1226 times
-        245: kernel launched 1226 times
-            grid: [65535]  block: [128]
-             device time(us): total=737,846 max=605 min=599 avg=601
-            elapsed time(us): total=760,984 max=637 min=618 avg=620
-			*/
 		if(DEBUG_TIMING_OUTPUT)
 			start_time_2 = MPI_Wtime();
 
@@ -369,21 +361,20 @@ int main(int argc, char* argv[])
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
 			}
 
-			for(int i = 0; i < comm_size; i++) {
-				if(snapshot_requests[i] != MPI_REQUEST_NULL)
-				{
-					MPI_Wait(&snapshot_requests[i], MPI_STATUS_IGNORE);
-				}
-			}
+//			for(int i = 0; i < comm_size; i++) {
+//				if(snapshot_requests[i] != MPI_REQUEST_NULL)
+//				{
+//					MPI_Wait(&snapshot_requests[i], MPI_STATUS_IGNORE);
+//				}
+//			}
 
 			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
-			
+
 			if(my_rank == MASTER_PROCESS_RANK) {
 				memcpy(snapshot, &temperatures[1][0], buffer_size * sizeof(double));
+				MPI_Irecv(
 			} else {
 				memcpy(snapshot_buffer, &temperatures[1][0], buffer_size * sizeof(double));
-
-				
 			}
 		}
 
@@ -408,8 +399,8 @@ int main(int argc, char* argv[])
 		iteration_count++;
 	}
 
-	if(snapshot_request != MPI_REQUEST_NULL)
-		MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
+//	if(snapshot_request != MPI_REQUEST_NULL)
+//		MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
 
 	///////////////////////////////////////////////
 	//     ^                                     //
