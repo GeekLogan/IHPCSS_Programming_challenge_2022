@@ -278,10 +278,11 @@ int main(int argc, char* argv[])
 			{
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
 			}
-			if(snapshot_request != MPI_REQUEST_NULL) MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
+			//if(snapshot_request != MPI_REQUEST_NULL) MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
 			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
-			memcpy(snapshot_buffer, temperatures, buffer_size * sizeof(double));
-			MPI_Igather(snapshot_buffer, buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
+			//memcpy(snapshot_buffer, temperatures, buffer_size * sizeof(double));
+			//MPI_Igather(snapshot_buffer, buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
+			MPI_Gather(snapshot_buffer, buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 		}
 
 		// Calculate the total time spent processing
