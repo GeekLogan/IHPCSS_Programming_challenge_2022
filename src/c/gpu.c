@@ -171,57 +171,56 @@ int main(int argc, char* argv[])
 		// Define temp reduction variables
 		double temp1 = 0, temp2 = 0, temp3 = 0;
 
-		#pragma acc kernels
+		
+		#pragma acc kernels independent async(1)
+		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
-			#pragma acc loop independent async(1)
-			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
+			// Process the cell at the first column, which has no left neighbour
+			if(temperatures[i][0] != MAX_TEMPERATURE)
 			{
-				// Process the cell at the first column, which has no left neighbour
-				if(temperatures[i][0] != MAX_TEMPERATURE)
-				{
-					temperatures[i][0] = (
-						temperatures_last[i-1][0] +
-						temperatures_last[i+1][0] +
-						temperatures_last[i  ][1]
-						) / 3.0;
-				}
-				temp1 = fmax(fabs(temperatures[i][0] - temperatures_last[i][0]), temp1);
+				temperatures[i][0] = (
+					temperatures_last[i-1][0] +
+					temperatures_last[i+1][0] +
+					temperatures_last[i  ][1]
+					) / 3.0;
 			}
+			temp1 = fmax(fabs(temperatures[i][0] - temperatures_last[i][0]), temp1);
+		}
 
-			#pragma acc loop independent tile(32,32) async(2)
-			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
+		#pragma acc kernels independent tile(32,32) async(2)
+		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
+		{
+			// Process all cells between the first and last columns excluded, which each has both left and right neighbours
+			for(int j = 1; j < COLUMNS_PER_MPI_PROCESS - 1; j++)
 			{
-				// Process all cells between the first and last columns excluded, which each has both left and right neighbours
-				for(int j = 1; j < COLUMNS_PER_MPI_PROCESS - 1; j++)
+				if(temperatures[i][j] != MAX_TEMPERATURE)
 				{
-					if(temperatures[i][j] != MAX_TEMPERATURE)
-					{
-						temperatures[i][j] = 0.25 * (
-							temperatures_last[i-1][j  ] +
-							temperatures_last[i+1][j  ] +
-							temperatures_last[i  ][j-1] +
-							temperatures_last[i  ][j+1]
-							);
-					}
-					temp2 = fmax(fabs(temperatures[i][j] - temperatures_last[i][j]), temp2);
+					temperatures[i][j] = 0.25 * (
+						temperatures_last[i-1][j  ] +
+						temperatures_last[i+1][j  ] +
+						temperatures_last[i  ][j-1] +
+						temperatures_last[i  ][j+1]
+						);
 				}
-			}
-
-			#pragma acc loop independent async(3)
-			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
-			{
-				// Process the cell at the last column, which has no right neighbour
-				if(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] != MAX_TEMPERATURE)
-				{
-					temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] = (
-						temperatures_last[i-1][COLUMNS_PER_MPI_PROCESS - 1] +
-						temperatures_last[i+1][COLUMNS_PER_MPI_PROCESS - 1] +
-						temperatures_last[i  ][COLUMNS_PER_MPI_PROCESS - 2]
-						) / 3.0;
-					temp3 = fmax(fabs(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] - temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1]), temp3);
-				}
+				temp2 = fmax(fabs(temperatures[i][j] - temperatures_last[i][j]), temp2);
 			}
 		}
+
+		#pragma acc kernels independent async(3)
+		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
+		{
+			// Process the cell at the last column, which has no right neighbour
+			if(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] != MAX_TEMPERATURE)
+			{
+				temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] = (
+					temperatures_last[i-1][COLUMNS_PER_MPI_PROCESS - 1] +
+					temperatures_last[i+1][COLUMNS_PER_MPI_PROCESS - 1] +
+					temperatures_last[i  ][COLUMNS_PER_MPI_PROCESS - 2]
+					) / 3.0;
+				temp3 = fmax(fabs(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] - temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1]), temp3);
+			}
+		}
+		
 
 		///////////////////////////////////////////////////////
 		// -- SUBTASK 3: CALCULATE MAX TEMPERATURE CHANGE -- //
