@@ -19,7 +19,7 @@
 
 #include "util.h"
 
-#define DEBUG_TIMING_OUTPUT 1
+#define DEBUG_TIMING_OUTPUT 0
 
 /**
  * @argv[0] Name of the program
