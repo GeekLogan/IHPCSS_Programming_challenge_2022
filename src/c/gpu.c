@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
 
 	MPI_Request snapshot_request = MPI_REQUEST_NULL;
 	const size_t buffer_size = ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS;
-	void * snapshot_buffer = malloc(buffer_size);
+	void * snapshot_buffer = malloc(buffer_size * sizeof(double));
 
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
@@ -280,8 +280,8 @@ int main(int argc, char* argv[])
 			}
 			if(snapshot_request != MPI_REQUEST_NULL) MPI_Wait(&snapshot_request, MPI_STATUS_IGNORE);
 			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
-			memcpy(snapshot_buffer, temperatures, buffer_size);
-			MPI_Igather(snapshot_buffer, buffer_size, MPI_DOUBLE, snapshot, ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
+			memcpy(snapshot_buffer, temperatures, buffer_size * sizeof(double));
+			MPI_Igather(snapshot_buffer, buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
 		}
 
 		// Calculate the total time spent processing
