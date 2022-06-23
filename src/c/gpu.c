@@ -112,8 +112,7 @@ int main(int argc, char* argv[])
 	double snapshot[ROWS][COLUMNS]; /// The last snapshot made
 
 	acc_set_device_num( my_rank, acc_device_nvidia );
-
-if(my_rank==MASTER_PROCESS_RANK){
+	if(my_rank != MASTER_PROCESS_RANK) return;
 
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
@@ -212,7 +211,6 @@ if(my_rank==MASTER_PROCESS_RANK){
 				temperatures_last[i][j] = temperatures[i][j];
 			}
 		}
-		}
 
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
@@ -223,7 +221,6 @@ if(my_rank==MASTER_PROCESS_RANK){
 				#pragma acc update host(temperatures[0:ROWS][0:COLUMNS])
 				memcpy(&snapshot[0][0], &temperatures[0][0], ROWS * COLUMNS);
 		}
-	}
 
 		// Calculate the total time spent processing
 		if(my_rank == MASTER_PROCESS_RANK)
@@ -232,7 +229,7 @@ if(my_rank==MASTER_PROCESS_RANK){
 		}
 
 		// Send total timer to everybody so they too can exit the loop if more than the allowed runtime has elapsed already
-		MPI_Bcast(&total_time_so_far, 1, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
+		//MPI_Bcast(&total_time_so_far, 1, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 
 		// Update the iteration number
 		iteration_count++;
