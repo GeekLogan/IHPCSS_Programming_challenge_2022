@@ -11,7 +11,8 @@
 #include <mpi.h>
 #include <omp.h>
 #include <inttypes.h>
-#include <math.h>
+//#include <math.h>
+#include <accelmath.h>
 #include <sched.h>
 #include <unistd.h>
 #include <string.h>
