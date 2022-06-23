@@ -184,6 +184,7 @@ int main(int argc, char* argv[])
 					temp3 = fmax(fabs(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] - temperatures_last[i][COLUMNS_PER_MPI_PROCESS - 1]), temp3);
 				}
 			}
+			*/
 		}
 
 		///////////////////////////////////////////////////////
