@@ -161,10 +161,11 @@ int main(int argc, char* argv[])
 		/////////////////////////////////////////////
 		// -- SUBTASK 2: PROPAGATE TEMPERATURES -- //
 		/////////////////////////////////////////////
-		#pragma omp for
-		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
+		#pragma omp parallel
 		{
 			// Process the cell at the first column, which has no left neighbour
+			#pragma omp for nowait
+			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			if(temperatures[i][0] != MAX_TEMPERATURE)
 			{
 				temperatures[i][0] = (temperatures_last[i-1][0] +
@@ -172,6 +173,8 @@ int main(int argc, char* argv[])
 									  temperatures_last[i  ][1]) / 3.0;
 			}
 			// Process all cells between the first and last columns excluded, which each has both left and right neighbours
+			#pragma omp for nowait
+			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			for(int j = 1; j < COLUMNS_PER_MPI_PROCESS - 1; j++)
 			{
 				if(temperatures[i][j] != MAX_TEMPERATURE)
@@ -183,6 +186,8 @@ int main(int argc, char* argv[])
 				}
 			}
 			// Process the cell at the last column, which has no right neighbour
+			#pragma omp for nowait
+			for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 			if(temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] != MAX_TEMPERATURE)
 			{
 				temperatures[i][COLUMNS_PER_MPI_PROCESS - 1] = (temperatures_last[i-1][COLUMNS_PER_MPI_PROCESS - 1] +
