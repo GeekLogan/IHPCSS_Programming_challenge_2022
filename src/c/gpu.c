@@ -104,10 +104,7 @@ int main(int argc, char* argv[])
 	double snapshot[ROWS][COLUMNS]; /// The last snapshot made
 
 	//acc_set_device_num( my_rank, acc_device_nvidia );
-	if(my_rank != MASTER_PROCESS_RANK) {
-		MPI_Finalize();
-		return 0;
-	}
+	if(my_rank == MASTER_PROCESS_RANK) {
 
 	#pragma acc data copyin(temperatures_last, temperatures), create(snapshot)
 	while(total_time_so_far < MAX_TIME)
@@ -234,6 +231,8 @@ int main(int argc, char* argv[])
 
 		// Update the iteration number
 		iteration_count++;
+	}
+	
 	}
 
 	///////////////////////////////////////////////
