@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
 
 	acc_set_device_num( my_rank, acc_device_nvidia );
 	if(my_rank != MASTER_PROCESS_RANK) return 0;
-
+s
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
 	{
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
 			}
 			*/
 
-			#pragma acc loop independent tile(32,32)
+			#pragma acc loop independent tile(128,128)
 			for(int i = 1; i < ROWS - 1; i++)
 			{
 				// Process all cells between the first and last columns excluded, which each has both left and right neighbours
@@ -218,7 +218,7 @@ int main(int argc, char* argv[])
 				#pragma acc update host(temperatures[0:ROWS][0:COLUMNS])
 				memcpy(&snapshot[0][0], &temperatures[0][0], ROWS * COLUMNS);
 		}
-printf("here4\n");
+		
 		// Calculate the total time spent processing
 		if(my_rank == MASTER_PROCESS_RANK)
 		{
