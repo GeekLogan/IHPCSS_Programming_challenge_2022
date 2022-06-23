@@ -85,7 +85,9 @@ int main(int argc, char* argv[])
 	// -- TASK 1: DISTRIBUTE DATA TO ALL MPI PROCESSES -- //
 	////////////////////////////////////////////////////////
 	double total_time_so_far = 0.0;
+	double total_time_so_far_2 = 0.0;
 	double start_time = MPI_Wtime();
+	double start_time_2 = MPI_Wtime();
 
 	if(my_rank == MASTER_PROCESS_RANK)
 	{
@@ -146,6 +148,10 @@ int main(int argc, char* argv[])
 	//MPI_Request snapshot_request = MPI_REQUEST_NULL;
 	const size_t buffer_size = ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS;
 	//void * snapshot_buffer = malloc(buffer_size * sizeof(double));
+
+	total_time_so_far_2 = MPI_Wtime() - start_time_2;
+	if(my_rank == MASTER_PROCESS_RANK)
+		printf("Init took %.2f.\n", total_time_so_far_2);
 
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
@@ -282,7 +288,7 @@ int main(int argc, char* argv[])
 			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 			//memcpy(snapshot_buffer, temperatures, buffer_size * sizeof(double));
 			//MPI_Igather(snapshot_buffer, buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
-			//MPI_Gather(&temperatures[1][0], buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
+			MPI_Gather(&temperatures[1][0], buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 		}
 
 		// Calculate the total time spent processing
