@@ -282,7 +282,7 @@ int main(int argc, char* argv[])
 			#pragma acc update host(temperatures[1:ROWS_PER_MPI_PROCESS][0:COLUMNS_PER_MPI_PROCESS])
 			//memcpy(snapshot_buffer, temperatures, buffer_size * sizeof(double));
 			//MPI_Igather(snapshot_buffer, buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
-			MPI_Gather(&temperatures[1][0], buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
+			//MPI_Gather(&temperatures[1][0], buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 		}
 
 		// Calculate the total time spent processing
