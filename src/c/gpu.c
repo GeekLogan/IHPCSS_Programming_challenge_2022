@@ -201,13 +201,6 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		/*
-		237: compute region reached 1226 times
-        245: kernel launched 1226 times
-            grid: [65535]  block: [128]
-             device time(us): total=737,846 max=605 min=599 avg=601
-            elapsed time(us): total=760,984 max=637 min=618 avg=620
-			*/
 		#pragma acc kernels loop independent collapse(2)
 		for(int i = 0; i <= ROWS; i++)
 		{
