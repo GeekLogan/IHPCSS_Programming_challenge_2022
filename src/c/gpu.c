@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Wait for everybody to receive their part before we can start processing
-//	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	/////////////////////////////
 	// TASK 2: DATA PROCESSING //
@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
 	double snapshot[ROWS][COLUMNS]; /// The last snapshot made
 
 	acc_set_device_num( my_rank, acc_device_nvidia );
-	if(my_rank != MASTER_PROCESS_RANK) return;
+	if(my_rank != MASTER_PROCESS_RANK) return 0;
 
 	#pragma acc data copyin(temperatures_last, temperatures)
 	while(total_time_so_far < MAX_TIME)
@@ -127,7 +127,6 @@ int main(int argc, char* argv[])
 		/////////////////////////////////////////////
 		// Define temp reduction variables
 		double temp1 = 0, temp2 = 0, temp3 = 0;
-		if(my_rank == MASTER_PROCESS_RANK) {
 
 		#pragma acc kernels
 		{
