@@ -186,6 +186,7 @@ int main(int argc, char* argv[])
 		/////////////////////////////////////////////
 		// Define temp reduction variables
 		double temp1 = 0, temp2 = 0, temp3 = 0;
+		start_time_2 = MPI_Wtime();
 
 		#pragma acc kernels
 		{
@@ -239,16 +240,32 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		total_time_so_far_2 = MPI_Wtime() - start_time_2;
+		if(my_rank == MASTER_PROCESS_RANK)
+			printf("Subtask 2 took %.2f.\n", total_time_so_far_2);
+
 		///////////////////////////////////////////////////////
 		// -- SUBTASK 3: CALCULATE MAX TEMPERATURE CHANGE -- //
 		///////////////////////////////////////////////////////
 		// only need to reduce the values from the 3 subprocesses
+		start_time_2 = MPI_Wtime();
+		
 		my_temperature_change = fmax(fmax(temp1, temp2), temp3);
+
+		total_time_so_far_2 = MPI_Wtime() - start_time_2;
+		if(my_rank == MASTER_PROCESS_RANK)
+			printf("Subtask 3 took %.2f.\n", total_time_so_far_2);
 
 		//////////////////////////////////////////////////////////
 		// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
 		//////////////////////////////////////////////////////////
+		start_time_2 = MPI_Wtime();
+
 		MPI_Reduce(&my_temperature_change, &global_temperature_change, 1, MPI_DOUBLE, MPI_MAX, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
+
+		total_time_so_far_2 = MPI_Wtime() - start_time_2;
+		if(my_rank == MASTER_PROCESS_RANK)
+			printf("Subtask 4 took %.2f.\n", total_time_so_far_2);
 
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
@@ -260,6 +277,8 @@ int main(int argc, char* argv[])
              device time(us): total=737,846 max=605 min=599 avg=601
             elapsed time(us): total=760,984 max=637 min=618 avg=620
 			*/
+		start_time_2 = MPI_Wtime();
+
 		#pragma acc kernels loop independent collapse(2) async(1)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
@@ -268,6 +287,10 @@ int main(int argc, char* argv[])
 				temperatures_last[i][j] = temperatures[i][j];
 			}
 		}
+
+		total_time_so_far_2 = MPI_Wtime() - start_time_2;
+		if(my_rank == MASTER_PROCESS_RANK)
+			printf("Subtask 5 took %.2f.\n", total_time_so_far_2);
 
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
@@ -283,6 +306,7 @@ int main(int argc, char* argv[])
                 MPI_Comm communicator,
                 MPI_Request* request);
 				*/
+		start_time_2 = MPI_Wtime();
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
 		{	
 			if(my_rank == MASTER_PROCESS_RANK)
@@ -295,6 +319,10 @@ int main(int argc, char* argv[])
 			//MPI_Igather(snapshot_buffer, buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD, &snapshot_request);
 			MPI_Gather(&temperatures[1][0], buffer_size, MPI_DOUBLE, snapshot, buffer_size, MPI_DOUBLE, MASTER_PROCESS_RANK, MPI_COMM_WORLD);
 		}
+
+		total_time_so_far_2 = MPI_Wtime() - start_time_2;
+		if(my_rank == MASTER_PROCESS_RANK)
+			printf("Subtask 6 took %.2f.\n", total_time_so_far_2);
 
 		// Calculate the total time spent processing
 		if(my_rank == MASTER_PROCESS_RANK)
