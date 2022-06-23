@@ -179,7 +179,7 @@ int main(int argc, char* argv[])
 
 		total_time_so_far_2 = MPI_Wtime() - start_time_2;
 		if(my_rank == MASTER_PROCESS_RANK)
-			printf("Subtask 1 took %.2f.\n", total_time_so_far_2);
+			printf("Subtask 1 took %.18f.\n", total_time_so_far_2);
 
 		/////////////////////////////////////////////
 		// -- SUBTASK 2: PROPAGATE TEMPERATURES -- //
@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
 
 		total_time_so_far_2 = MPI_Wtime() - start_time_2;
 		if(my_rank == MASTER_PROCESS_RANK)
-			printf("Subtask 2 took %.2f.\n", total_time_so_far_2);
+			printf("Subtask 2 took %.18f.\n", total_time_so_far_2);
 
 		///////////////////////////////////////////////////////
 		// -- SUBTASK 3: CALCULATE MAX TEMPERATURE CHANGE -- //
@@ -254,7 +254,7 @@ int main(int argc, char* argv[])
 
 		total_time_so_far_2 = MPI_Wtime() - start_time_2;
 		if(my_rank == MASTER_PROCESS_RANK)
-			printf("Subtask 3 took %.2f.\n", total_time_so_far_2);
+			printf("Subtask 3 took %.18f.\n", total_time_so_far_2);
 
 		//////////////////////////////////////////////////////////
 		// -- SUBTASK 4: FIND MAX TEMPERATURE CHANGE OVERALL -- //
@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
 
 		total_time_so_far_2 = MPI_Wtime() - start_time_2;
 		if(my_rank == MASTER_PROCESS_RANK)
-			printf("Subtask 4 took %.2f.\n", total_time_so_far_2);
+			printf("Subtask 4 took %.18f.\n", total_time_so_far_2);
 
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
@@ -290,7 +290,7 @@ int main(int argc, char* argv[])
 
 		total_time_so_far_2 = MPI_Wtime() - start_time_2;
 		if(my_rank == MASTER_PROCESS_RANK)
-			printf("Subtask 5 took %.2f.\n", total_time_so_far_2);
+			printf("Subtask 5 took %.18f.\n", total_time_so_far_2);
 
 		///////////////////////////////////
 		// -- SUBTASK 6: GET SNAPSHOT -- //
@@ -322,7 +322,7 @@ int main(int argc, char* argv[])
 
 		total_time_so_far_2 = MPI_Wtime() - start_time_2;
 		if(my_rank == MASTER_PROCESS_RANK)
-			printf("Subtask 6 took %.2f.\n", total_time_so_far_2);
+			printf("Subtask 6 took %.18f.\n", total_time_so_far_2);
 
 		// Calculate the total time spent processing
 		if(my_rank == MASTER_PROCESS_RANK)
