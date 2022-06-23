@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 	acc_set_device_num( my_rank, acc_device_nvidia );
 
 	//MPI_Request snapshot_request = MPI_REQUEST_NULL;
-	//const size_t buffer_size = ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS;
+	const size_t buffer_size = ROWS_PER_MPI_PROCESS * COLUMNS_PER_MPI_PROCESS;
 	//void * snapshot_buffer = malloc(buffer_size * sizeof(double));
 
 	#pragma acc data copyin(temperatures_last, temperatures)
