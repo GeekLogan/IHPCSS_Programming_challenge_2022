@@ -25,7 +25,7 @@
  **/
 int main(int argc, char* argv[])
 {
-	MPI_Init(NULL, NULL);
+	//MPI_Init(NULL, NULL);
 
 	/////////////////////////////////////////////////////
 	// -- PREPARATION 1: COLLECT USEFUL INFORMATION -- //
@@ -34,12 +34,12 @@ int main(int argc, char* argv[])
 	const int MASTER_PROCESS_RANK = 0;
 
 	// The rank of the MPI process in charge of this instance
-	int my_rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+	int my_rank = 0;
+	//MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
 	// Number of MPI processes in total, commonly called "comm_size" for "communicator size".
 	int comm_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+	//MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
 
 	/// Rank of the first MPI process
 	const int FIRST_PROCESS_RANK = 0;
@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 		initialise_temperatures(temperatures_last);
 	}
 
-	MPI_Barrier(MPI_COMM_WORLD);
+	//MPI_Barrier(MPI_COMM_WORLD);
 
 	///////////////////////////////////////////
 	//     ^                                 //
@@ -251,7 +251,7 @@ int main(int argc, char* argv[])
 		printf("The program took %.2f seconds in total and executed %d iterations.\n", total_time_so_far, iteration_count);
 	}
 
-	MPI_Finalize();
+	//MPI_Finalize();
 
 	return EXIT_SUCCESS;
 }
