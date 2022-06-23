@@ -171,7 +171,7 @@ int main(int argc, char* argv[])
 		// Define temp reduction variables
 		double temp1 = 0, temp2 = 0, temp3 = 0;
 
-		#pragma acc kernels loop independent async(1)
+		#pragma acc kernels async(1)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			// Process the cell at the first column, which has no left neighbour
@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		#pragma acc kernels loop independent async(3)
+		#pragma acc kernels async(3)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			// Process the cell at the last column, which has no right neighbour
@@ -223,7 +223,7 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		#pragma acc kernels loop independent async(4) wait(1,2,3)
+		#pragma acc kernels wait(1,2,3)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			for(int j = 0; j < COLUMNS_PER_MPI_PROCESS; j++)
@@ -268,8 +268,6 @@ int main(int argc, char* argv[])
 
 		// Update the iteration number
 		iteration_count++;
-
-		#pragma acc wait(4)
 	}
 
 	///////////////////////////////////////////////
