@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
 		double temp1 = 0, temp2 = 0, temp3 = 0;
 
 		
-		#pragma acc kernels independent async(1)
+		#pragma acc kernels async(1)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			// Process the cell at the first column, which has no left neighbour
@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		#pragma acc kernels independent async(3)
+		#pragma acc kernels async(3)
 		for(int i = 1; i <= ROWS_PER_MPI_PROCESS; i++)
 		{
 			// Process the cell at the last column, which has no right neighbour
