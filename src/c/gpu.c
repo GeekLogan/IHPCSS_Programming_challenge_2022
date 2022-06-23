@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 	acc_set_device_num( my_rank, acc_device_nvidia );
 	if(my_rank != MASTER_PROCESS_RANK) return 0;
 
-	#pragma acc data copyin(temperatures_last, temperatures)
+	#pragma acc data copyin(temperatures_last, temperatures), create(snapshot)
 	while(total_time_so_far < MAX_TIME)
 	{
 		// ////////////////////////////////////////
@@ -200,12 +200,13 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////
 		// -- SUBTASK 5: UPDATE LAST ITERATION ARRAY -- //
 		//////////////////////////////////////////////////
-		#pragma acc kernels loop independent collapse(2)
+		#pragma acc kernels collapse(2)
 		for(int i = 0; i < ROWS; i++)
 		{
 			for(int j = 0; j < COLUMNS; j++)
 			{
 				temperatures_last[i][j] = temperatures[i][j];
+				snapshot[i][j] = temperatures[i][j];
 			}
 		}
 
@@ -215,8 +216,9 @@ int main(int argc, char* argv[])
 		if(iteration_count % SNAPSHOT_INTERVAL == 0)
 		{
 				printf("Iteration %d: %.18f\n", iteration_count, global_temperature_change);
-				#pragma acc update host(temperatures[0:ROWS][0:COLUMNS])
-				memcpy(&snapshot[0][0], &temperatures[0][0], ROWS * COLUMNS);
+				//#pragma acc update host(temperatures[0:ROWS][0:COLUMNS]) async
+				//memcpy(&snapshot[0][0], &temperatures[0][0], ROWS * COLUMNS);
+				#pragma acc update host(snapshot)
 		}
 		
 		// Calculate the total time spent processing
